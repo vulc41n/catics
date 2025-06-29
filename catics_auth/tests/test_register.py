@@ -64,7 +64,7 @@ class RegisterTestCase(APITestCase):
         challenge_id = RegisterChallenge.objects.create(
             challenge=CHALLENGE_TOKEN,
             email=EMAIL,
-            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+            expire_at=timezone.now() + settings.REGISTER_CHALLENGE_EXPIRATION,
         ).id
         response = self.client.post(
             reverse('auth-register'),
@@ -84,7 +84,7 @@ class RegisterTestCase(APITestCase):
         challenge_id = RegisterChallenge.objects.create(
             challenge=CHALLENGE_TOKEN,
             email=EMAIL,
-            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+            expire_at=timezone.now() + settings.REGISTER_CHALLENGE_EXPIRATION,
         ).id
         self.client.post(
             reverse('auth-register'),
@@ -114,7 +114,7 @@ class RegisterTestCase(APITestCase):
         challenge_id = RegisterChallenge.objects.create(
             challenge=CHALLENGE_TOKEN,
             email=EMAIL,
-            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+            expire_at=timezone.now() + settings.REGISTER_CHALLENGE_EXPIRATION,
         ).id
         self.client.post(
             reverse('auth-register'),
@@ -144,7 +144,7 @@ class RegisterTestCase(APITestCase):
         challenge_id = RegisterChallenge.objects.create(
             challenge=CHALLENGE_TOKEN,
             email=EMAIL,
-            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+            expire_at=timezone.now() + settings.REGISTER_CHALLENGE_EXPIRATION,
         ).id
         response = self.client.post(
             reverse('auth-register'),
@@ -163,7 +163,7 @@ class RegisterTestCase(APITestCase):
         challenge_id = RegisterChallenge.objects.create(
             challenge=CHALLENGE_TOKEN,
             email=EMAIL,
-            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+            expire_at=timezone.now() + settings.REGISTER_CHALLENGE_EXPIRATION,
         ).id
         response = self.client.get(reverse('auth-register-challenge'))
         self.assertEqual(response.status_code, 400)
@@ -186,7 +186,7 @@ class RegisterTestCase(APITestCase):
         challenge_id = RegisterChallenge.objects.create(
             challenge=CHALLENGE_TOKEN,
             email=EMAIL,
-            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+            expire_at=timezone.now() + settings.REGISTER_CHALLENGE_EXPIRATION,
         ).id
         response = self.client.post(
             reverse('auth-register'),
@@ -205,7 +205,7 @@ class RegisterTestCase(APITestCase):
         challenge_id = RegisterChallenge.objects.create(
             challenge=CHALLENGE_TOKEN,
             email=EMAIL,
-            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+            expire_at=timezone.now() + settings.REGISTER_CHALLENGE_EXPIRATION,
         ).id
         response = self.client.post(
             reverse('auth-register'),
@@ -225,7 +225,7 @@ class RegisterTestCase(APITestCase):
         challenge_id = RegisterChallenge.objects.create(
             challenge=CHALLENGE_TOKEN,
             email=EMAIL,
-            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+            expire_at=timezone.now() + settings.REGISTER_CHALLENGE_EXPIRATION,
         ).id
         response = self.client.post(
             reverse('auth-register'),

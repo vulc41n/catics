@@ -1,14 +1,31 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
-from catics_auth.models import Registration
-from .constants import EMAIL, USERNAME, PASSWORD
+from catics_auth.models import Validation
+from ..models import RegisterChallenge
+from .constants import EMAIL, USERNAME, PASSWORD, CHALLENGE_TOKEN, CHALLENGE_ANSWER
 
 User = get_user_model()
 
 class GetFromUsernameTestCase(APITestCase):
     def setUp(self):
+        challenge_id = RegisterChallenge.objects.create(
+            challenge=CHALLENGE_TOKEN,
+            email=EMAIL,
+            expire_at=timezone.now() + settings.REGISTER_CHALLENGE_EXPIRATION,
+        ).id
+        response = self.client.post(
+            reverse('auth-register'),
+            {
+                'username': USERNAME,
+                'email': EMAIL,
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
+        )
         self.client.post(
             reverse('auth-register'),
             { 'username': USERNAME, 'email': EMAIL, 'password': PASSWORD },

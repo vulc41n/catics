@@ -13,7 +13,7 @@ class LoginTestCase(APITestCase):
         challenge_id = RegisterChallenge.objects.create(
             challenge=CHALLENGE_TOKEN,
             email=EMAIL,
-            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+            expire_at=timezone.now() + settings.REGISTER_CHALLENGE_EXPIRATION,
         ).id
         self.client.post(
             reverse('auth-register'),

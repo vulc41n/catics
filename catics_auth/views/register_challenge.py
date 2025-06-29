@@ -27,7 +27,7 @@ class RegisterChallengeView(APIView):
         challenge_id = RegisterChallenge.objects.create(
             challenge=challenge,
             email=data['email'],
-            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+            expire_at=timezone.now() + settings.REGISTER_CHALLENGE_EXPIRATION,
         ).id
         return Response({
             'id': challenge_id,
