@@ -152,8 +152,8 @@ while True:
     game = response.json()
 
     if 'winner' in game:
-        if (is_player1() and game['winner'] == '1') or \
-            (not is_player1() and game['winner'] == '2'):
+        if (is_player1(config, game) and game['winner'] == '1') or \
+            (not is_player1(config, game) and game['winner'] == '2'):
             print('YOU WIN')
         else:
             print('YOUR OPPONENT WINS')
