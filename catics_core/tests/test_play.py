@@ -1065,6 +1065,60 @@ class PlayTestCase(APITestCase):
         self.assertEqual(self.game.n_cats_p2, 7)
         self.assertEqual(self.game.winner, '1')
 
+    '''
+    +-----+-----+-----+-----+-----+-----+
+    |     |     |     |     |     |     |
+    +-----+-----+-----+-----+-----+-----+
+    |     | p2c |     |     |     | p2c |
+    +-----+-----+-----+-----+-----+-----+
+    |     |     |     |     |*p2k*|     |
+    +-----+-----+-----+-----+-----+-----+
+    |     |     |     | p1c |     |     |
+    +-----+-----+-----+-----+-----+-----+
+    |     |     | p1c |     |     |     |
+    +-----+-----+-----+-----+-----+-----+
+    |     | p2c |     |     |     | p1k |
+    +-----+-----+-----+-----+-----+-----+
+    '''
+    def test_2_players_line(self):
+        self.game.n_cats_p1 += 2
+        self.game.n_kittens_p1 -= 2
+        self.game.n_cats_p2 += 3
+        self.game.n_kittens_p2 -= 3
+
+        state = GameState(self.game)
+        state.play(0, 0, False)
+        state.play(1, 1, True)
+        state.play(2, 4, True)
+        state.play(1, 5, True)
+        state.play(4, 2, True)
+        state.play(5, 1, True)
+        state.play(5, 5, False)
+        state.save()
+
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token2)
+        response = self.client.post(
+            reverse('core-play'),
+            { 'game': self.game.id, 'x': 4, 'y': 2, 'is_cat': False },
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.game.refresh_from_db()
+        board = Board(response.data['board'])
+        self.assertEqual(len(board), 7)
+        self.assertEqual(board.get(1, 1), Position(False, True))
+        self.assertEqual(board.get(5, 1), Position(False, True))
+        self.assertEqual(board.get(4, 2), Position(False, False))
+        self.assertEqual(board.get(3, 3), Position(True, True))
+        self.assertEqual(board.get(2, 4), Position(True, True))
+        self.assertEqual(board.get(1, 5), Position(False, True))
+        self.assertEqual(board.get(5, 5), Position(True, False))
+        self.assertEqual(self.game.n_kittens_p1, 5)
+        self.assertEqual(self.game.n_kittens_p2, 4)
+        self.assertEqual(self.game.n_cats_p1, 0)
+        self.assertEqual(self.game.n_cats_p2, 0)
+        self.assertEqual(self.game.winner, 'n')
+
     def test_wrong_player(self):
         self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token2)
         response = self.client.post(

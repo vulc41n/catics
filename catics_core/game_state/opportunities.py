@@ -81,7 +81,7 @@ class DiagonalOpportunities(Opportunities):
             self.descending[descending_index] = 0
         ascending_index = x - (5 - y) + 3
         if 0 <= ascending_index < 7:
-            self.ascending[ascending_index] += 0
+            self.ascending[ascending_index] = 0
 
     def new_position(self, x: int, y: int):
         descending_index = x - y + 3
