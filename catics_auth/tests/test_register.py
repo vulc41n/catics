@@ -165,6 +165,10 @@ class RegisterTestCase(APITestCase):
             email=EMAIL,
             expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
         ).id
+        response = self.client.get(reverse('auth-register-challenge'))
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['email'][0].code, 'required')
+        self.assertEqual(len(mail.outbox), 0)
         response = self.client.post(
             reverse('auth-register'),
             {
@@ -215,4 +219,24 @@ class RegisterTestCase(APITestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['password'][0].code, 'password_too_short')
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_wrong_challenge(self):
+        challenge_id = RegisterChallenge.objects.create(
+            challenge=CHALLENGE_TOKEN,
+            email=EMAIL,
+            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+        ).id
+        response = self.client.post(
+            reverse('auth-register'),
+            {
+                'username': USERNAME,
+                'email': EMAIL,
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER[:-1] + '!',
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['detail'].code, 'challenge_fail')
         self.assertEqual(len(mail.outbox), 0)
