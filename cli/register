@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import hashlib
+import random
+import string
 import sys
 from argparse import ArgumentParser
 from getpass import getpass
@@ -15,12 +18,33 @@ password = getpass('password:')
 
 config = Config()
 
+response = requests.get(config['instance'] + '/auth/register-challenge/', {
+    'email': args.email,
+})
+
+if response.status_code != 200:
+    print(response.text, file=sys.stderr)
+    exit(1)
+
+data = response.json()
+challenge_id = data['id']
+challenge_token = data['challenge']
+while True:
+    challenge_answer = ''.join(
+            random.choice(string.ascii_lowercase)
+            for _ in range(6)
+        )
+    digest = hashlib.sha256((challenge_token + challenge_answer).encode()).hexdigest()
+    if digest.startswith("000000"):
+        break
+
 response = requests.post(config['instance'] + '/auth/register/', {
     'username': args.username,
     'email': args.email,
     'password': password,
+    'challenge_id': challenge_id,
+    'challenge_answer': challenge_answer,
 })
-
 
 if response.status_code != 200:
     print(response.text, file=sys.stderr)
