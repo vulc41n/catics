@@ -16,14 +16,8 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
 TEST_RUNNER = 'catics.test_runner.DetectableTestRunner'
 TEST_MODE = False
-
 
 # Application definition
 
@@ -122,9 +116,6 @@ REST_KNOX = {
     'AUTO_REFRESH_MAX_TTL': timedelta(hours=24 * 7),
     'TOKEN_LIMIT_PER_USER': 5,
 }
-
-BASE_URL = 'http://localhost:8000'
-# TODO: email data
 
 WASM_MAX_SIZE = 1024 * 1024 * 10
 NAMES_MAX_SIZE = 200
