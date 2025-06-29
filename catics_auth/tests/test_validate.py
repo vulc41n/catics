@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase
 from knox.models import AuthToken
 from knox.settings import CONSTANTS
 from freezegun import freeze_time
-from ..models import Registration, RegisterChallenge
+from ..models import Validation, RegisterChallenge
 from .constants import USERNAME, PASSWORD, EMAIL, CHALLENGE_TOKEN, CHALLENGE_ANSWER
 
 class ValidateTestCase(APITestCase):
@@ -32,8 +32,8 @@ class ValidateTestCase(APITestCase):
             .select_related('user') \
             .first() \
             .user
-        self.registration = Registration.objects.get(user=self.user)
-        self.validation_code = self.registration.validation_code
+        self.validation = Validation.objects.get(user=self.user)
+        self.validation_code = self.validation.validation_code
 
     def test_basic(self):
         response = self.client.get(
@@ -47,7 +47,7 @@ class ValidateTestCase(APITestCase):
         self.assertTrue(response.data)
 
     def test_expiration(self):
-        with freeze_time(self.registration.expire_at + timedelta(seconds=1)):
+        with freeze_time(self.validation.expire_at + timedelta(seconds=1)):
             response = self.client.get(
                 reverse('auth-validate'),
                 { 'email': EMAIL, 'code': self.validation_code },
@@ -60,7 +60,7 @@ class ValidateTestCase(APITestCase):
             self.assertFalse(response.data)
 
     def test_unusable(self):
-        Registration.objects.filter(pk=self.registration.id).update(is_usable=False)
+        Validation.objects.filter(pk=self.validation.id).update(is_usable=False)
         response = self.client.get(
             reverse('auth-validate'),
             { 'email': EMAIL, 'code': self.validation_code },

@@ -10,7 +10,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import permissions, serializers
 from rest_framework.response import Response
 from knox.views import LoginView as KnoxLoginView
-from ..models import Registration, RegisterChallenge
+from ..models import Validation, RegisterChallenge
 from .exceptions import ChallengeForAnotherEmailException, ChallengeFailException
 
 User = get_user_model()
@@ -54,7 +54,7 @@ class RegisterView(KnoxLoginView):
                 random.choice(string.ascii_lowercase)
                 for _ in range(settings.EMAIL_VALIDATION_SIZE)
             )
-        Registration.objects.create(
+        Validation.objects.create(
             user=user,
             expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
             validation_code=code,

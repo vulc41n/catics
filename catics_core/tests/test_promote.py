@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
-from catics_auth.models import Registration
+from catics_auth.models import Validation
 from ..game_state import GameState, Board, Position
 from .helpers import two_players_setup, all_units, PASSWORD
 
@@ -59,7 +59,7 @@ class PromoteTestCase(APITestCase):
         self.assertEqual(len(board), 8)
 
     def test_unvalidated(self):
-        Registration.objects.filter(user=self.player1).update(is_validated=False)
+        Validation.objects.filter(user=self.player1).update(is_validated=False)
 
         self.double_lines_setup()
         response = self.client.post(
@@ -118,12 +118,12 @@ class PromoteTestCase(APITestCase):
             email='other@catics.fr',
             password=PASSWORD,
         )
-        Registration.objects.create(
+        Validation.objects.create(
             user=other,
             expire_at=timezone.now(),
             validation_code='',
         )
-        Registration.objects.filter(user=other).update(is_validated=True)
+        Validation.objects.filter(user=other).update(is_validated=True)
         response = self.client.post(
             reverse('auth-login'),
             { 'username': 'other', 'password': PASSWORD },

@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from ..models import Registration
+from ..models import Validation
 from .exceptions import ExpiredException
 
 User = get_user_model()
@@ -32,17 +32,17 @@ class ValidateView(APIView):
             # avoid bruteforce to get emails
             return Response(True)
 
-        registrations = Registration.objects.filter(
+        validations = Validation.objects.filter(
                 user=user,
                 is_usable=True,
                 validation_code=data['code'].lower(),
             )
-        registration = registrations.first()
-        if registration is None:
+        validation = validations.first()
+        if validation is None:
             # avoid bruteforce to get emails
             return Response(True)
-        if registration.expire_at < timezone.now():
+        if validation.expire_at < timezone.now():
             raise ExpiredException()
-        registrations.update(is_validated=True, is_usable=False)
+        validations.update(is_validated=True, is_usable=False)
         return Response(True)
 

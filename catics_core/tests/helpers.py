@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
-from catics_auth.models import Registration
+from catics_auth.models import Validation
 from ..game_state import GameState
 from ..models import Game
 
@@ -15,7 +15,7 @@ def two_players_setup(case):
         email='player1@catics.fr',
         password=PASSWORD,
     )
-    Registration.objects.create(
+    Validation.objects.create(
         user=case.player1,
         expire_at=timezone.now(),
         validation_code='',
@@ -33,7 +33,7 @@ def two_players_setup(case):
         email='player2@catics.fr',
         password=PASSWORD,
     )
-    Registration.objects.create(
+    Validation.objects.create(
         user=case.player2,
         expire_at=timezone.now(),
         validation_code='',

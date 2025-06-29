@@ -2,7 +2,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
-from catics_auth.models import Registration
+from catics_auth.models import Validation
 from ..models import Agent, Game
 from ..game_state import Board, Position
 from .helpers import all_units, PASSWORD
@@ -16,7 +16,7 @@ class GameTestCase(APITestCase):
             email='player1@catics.fr',
             password=PASSWORD,
         )
-        Registration.objects.create(
+        Validation.objects.create(
             user=self.player1,
             expire_at=timezone.now(),
             validation_code='',
@@ -33,7 +33,7 @@ class GameTestCase(APITestCase):
             email='player2@catics.fr',
             password=PASSWORD,
         )
-        Registration.objects.create(
+        Validation.objects.create(
             user=self.player2,
             expire_at=timezone.now(),
             validation_code='',
@@ -41,7 +41,7 @@ class GameTestCase(APITestCase):
         )
 
     def test_unvalidated(self):
-        Registration.objects.filter(user=self.player1).update(is_validated=False)
+        Validation.objects.filter(user=self.player1).update(is_validated=False)
         response = self.client.put(
             reverse('core-game'),
             { 'player2_user': self.player2.id },
@@ -72,7 +72,7 @@ class GameTestCase(APITestCase):
             email='spectator@catics.fr',
             password=PASSWORD,
         )
-        Registration.objects.create(
+        Validation.objects.create(
             user=spectator,
             expire_at=timezone.now(),
             validation_code='',

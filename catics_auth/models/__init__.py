@@ -1,3 +1,3 @@
 from .user import CaticsUser
-from .registration import Registration
+from .validation import Validation
 from .register_challenge import RegisterChallenge

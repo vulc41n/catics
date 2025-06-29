@@ -31,7 +31,7 @@ class GetFromUsernameTestCase(APITestCase):
             { 'username': USERNAME, 'email': EMAIL, 'password': PASSWORD },
         )
         self.user = User.objects.get(username=USERNAME)
-        Registration.objects.create(
+        Validation.objects.create(
             user=self.user,
             expire_at=timezone.now(),
             validation_code='',
@@ -53,7 +53,7 @@ class GetFromUsernameTestCase(APITestCase):
         self.assertEqual(response.data['detail'].code, 'not_authenticated')
 
     def test_unvalidated(self):
-        Registration.objects.filter(user=self.user).update(is_validated=False)
+        Validation.objects.filter(user=self.user).update(is_validated=False)
         self.test_basic()
 
     def test_basic(self):

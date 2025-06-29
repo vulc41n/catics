@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from .models import Registration
+from .models import Validation
 
 class IsValidated(permissions.BasePermission):
     """
@@ -10,4 +10,4 @@ class IsValidated(permissions.BasePermission):
     code = 'unvalidated'
 
     def has_permission(self, request, view):
-        return Registration.objects.filter(user=request.user, is_validated=True).exists()
+        return Validation.objects.filter(user=request.user, is_validated=True).exists()
