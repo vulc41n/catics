@@ -1,3 +1,5 @@
+import os
+import hashlib
 from django.core import mail
 from django.conf import settings
 from django.urls import reverse
@@ -7,8 +9,30 @@ from .constants import USERNAME, PASSWORD, EMAIL
 class RegisterTestCase(APITestCase):
     def test_basic(self):
         response = self.client.post(
+            reverse('auth-register-request'),
+            {},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('id', response.data)
+        self.assertIn('challenge', response.data)
+        challenge_id = response.data['id']
+        challenge_token = response.data['challenge']
+
+        while True:
+            challenge_answer = os.urandom(4).hex()
+            digest = hashlib.sha256((challenge_token + challenge_answer).encode()).hexdigest()
+            if digest.startswith("0000"):
+                break
+
+        response = self.client.post(
             reverse('auth-register'),
-            { 'username': USERNAME, 'email': EMAIL, 'password': PASSWORD },
+            {
+                'username': USERNAME,
+                'email': EMAIL,
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': challenge_answer,
+            },
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn('token', response.data)
