@@ -3,9 +3,13 @@ install:
 	. venv/bin/activate
 	pip install --upgrade pip
 	pip install -r requirements.txt
+	venv/bin/python manage.py migrate
 
 run:
-	python manage.py runserver
+	venv/bin/python manage.py runserver
+
+run_prod:
+	venv/bin/gunicorn catics.wsgi
 
 test:
 	python manage.py test

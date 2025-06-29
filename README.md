@@ -40,6 +40,6 @@ You can resume a game anytime with `./play resume [game_id]`
 - Clone this repo
 - run `make install`
 - edit the file `catics/settings_local.py`
-- run `make run`
+- run `make run` for a dev environment or `make run_prod` for a prod environment
 
 You can select on which instance you want to play on with `./cli/set_instance [url]`
