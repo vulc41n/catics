@@ -1,15 +1,29 @@
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APITestCase
-from .constants import EMAIL, USERNAME, PASSWORD
+from ..models import RegisterChallenge
+from .constants import EMAIL, USERNAME, PASSWORD, CHALLENGE_TOKEN, CHALLENGE_ANSWER
 
 User = get_user_model()
 
 class LoginTestCase(APITestCase):
     def setUp(self):
+        challenge_id = RegisterChallenge.objects.create(
+            challenge=CHALLENGE_TOKEN,
+            email=EMAIL,
+            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+        ).id
         self.client.post(
             reverse('auth-register'),
-            { 'username': USERNAME, 'email': EMAIL, 'password': PASSWORD },
+            {
+                'username': USERNAME,
+                'email': EMAIL,
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
         )
         self.user = User.objects.get(username=USERNAME)
 
