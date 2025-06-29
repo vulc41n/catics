@@ -26,7 +26,7 @@ def print_game(config, game):
                 print('    ', end='')
                 continue
             print('p1' if board[x][y][0] else 'p2', end='')
-            print('k' if board[x][y][1] else 'k', end='')
+            print('c' if board[x][y][1] else 'k', end='')
             print(' ', end='')
         print('|')
         print(LINE_SEPARATION, end='')
