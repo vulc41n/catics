@@ -8,10 +8,7 @@ from .constants import USERNAME, PASSWORD, EMAIL
 
 class RegisterTestCase(APITestCase):
     def test_basic(self):
-        response = self.client.post(
-            reverse('auth-register-request'),
-            {},
-        )
+        response = self.client.get(reverse('auth-register-request'))
         self.assertEqual(response.status_code, 200)
         self.assertIn('id', response.data)
         self.assertIn('challenge', response.data)
