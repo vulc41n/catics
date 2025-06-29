@@ -5,7 +5,11 @@ from . import views
 from .views import tests
 
 urlpatterns = [
-    path('register-request/', views.RegisterRequestView.as_view(), name='auth-register-request'),
+    path(
+         'register-challenge/',
+         views.RegisterChallengeView.as_view(),
+         name='auth-register-challenge',
+     ),
     path('register/', views.RegisterView.as_view(), name='auth-register'),
     path('validate/', views.ValidateView.as_view(), name='auth-validate'),
     path('login/', views.LoginView.as_view(), name='auth-login'),

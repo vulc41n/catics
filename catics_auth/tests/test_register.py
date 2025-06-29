@@ -8,7 +8,7 @@ from .constants import USERNAME, PASSWORD, EMAIL
 
 class RegisterTestCase(APITestCase):
     def test_basic(self):
-        response = self.client.get(reverse('auth-register-request'))
+        response = self.client.get(reverse('auth-register-challenge'), { 'email': EMAIL })
         self.assertEqual(response.status_code, 200)
         self.assertIn('id', response.data)
         self.assertIn('challenge', response.data)
@@ -16,9 +16,9 @@ class RegisterTestCase(APITestCase):
         challenge_token = response.data['challenge']
 
         while True:
-            challenge_answer = os.urandom(4).hex()
+            challenge_answer = os.urandom(6).hex()
             digest = hashlib.sha256((challenge_token + challenge_answer).encode()).hexdigest()
-            if digest.startswith("0000"):
+            if digest.startswith("000000"):
                 break
 
         response = self.client.post(
