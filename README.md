@@ -30,7 +30,7 @@ For example:
 - Clone this repo
 - run `make install`
 - `cd cli`
-- Create an account : `./register [username] [email]`
+- Create an account : `./register [username] [email]` (this may take a while)
 - Create a game with someone : `./play new -u [username]`
 
 You can resume a game anytime with `./play resume [game_id]`
