@@ -7,10 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 from ..models import RegisterChallenge
-from .constants import USERNAME, PASSWORD, EMAIL
-
-CHALLENGE_TOKEN = 'zyxyrszwiz'
-CHALLENGE_ANSWER = 'sbjplv'
+from .constants import USERNAME, PASSWORD, EMAIL, CHALLENGE_TOKEN, CHALLENGE_ANSWER
 
 class RegisterTestCase(APITestCase):
     def test_basic(self):

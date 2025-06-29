@@ -1,18 +1,30 @@
 from datetime import timedelta
 from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APITestCase
 from knox.models import AuthToken
 from knox.settings import CONSTANTS
 from freezegun import freeze_time
-from ..models import Registration
-from .constants import USERNAME, PASSWORD, EMAIL
+from ..models import Registration, RegisterChallenge
+from .constants import USERNAME, PASSWORD, EMAIL, CHALLENGE_TOKEN, CHALLENGE_ANSWER
 
 class ValidateTestCase(APITestCase):
     def setUp(self):
+        challenge_id = RegisterChallenge.objects.create(
+            challenge=CHALLENGE_TOKEN,
+            email=EMAIL,
+            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+        ).id
         response = self.client.post(
             reverse('auth-register'),
-            { 'username': USERNAME, 'email': EMAIL, 'password': PASSWORD },
+            {
+                'username': USERNAME,
+                'email': EMAIL,
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
         )
         self.token = response.data['token']
         token_start = self.token[:CONSTANTS.TOKEN_KEY_LENGTH]
