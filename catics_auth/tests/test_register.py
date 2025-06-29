@@ -10,6 +10,17 @@ from ..models import RegisterChallenge
 from .constants import USERNAME, PASSWORD, EMAIL, CHALLENGE_TOKEN, CHALLENGE_ANSWER
 
 class RegisterTestCase(APITestCase):
+    @staticmethod
+    def solve_challenge(token: str) -> str:
+        while True:
+            answer = ''.join(
+                    random.choice(string.ascii_lowercase)
+                    for _ in range(6)
+                )
+            digest = hashlib.sha256((token + answer).encode()).hexdigest()
+            if digest.startswith("000000"):
+                return answer
+
     def test_basic(self):
         response = self.client.get(reverse('auth-register-challenge'), { 'email': EMAIL })
         self.assertEqual(response.status_code, 200)
@@ -17,15 +28,7 @@ class RegisterTestCase(APITestCase):
         self.assertIn('challenge', response.data)
         challenge_id = response.data['id']
         challenge_token = response.data['challenge']
-
-        while True:
-            challenge_answer = ''.join(
-                    random.choice(string.ascii_lowercase)
-                    for _ in range(6)
-                )
-            digest = hashlib.sha256((challenge_token + challenge_answer).encode()).hexdigest()
-            if digest.startswith("000000"):
-                break
+        challenge_answer = RegisterTestCase.solve_challenge(challenge_token)
 
         response = self.client.post(
             reverse('auth-register'),
@@ -52,12 +55,29 @@ class RegisterTestCase(APITestCase):
         self.assertFalse(response.data)
 
     def test_wrong_email(self):
-        response = self.client.post(
-            reverse('auth-register'),
-            { 'username': USERNAME, 'email': 'notanemail', 'password': PASSWORD },
-        )
+        response = self.client.get(reverse('auth-register-challenge'), { 'email': 'notanemail' })
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['email'][0].code, 'invalid')
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_different_emails(self):
+        challenge_id = RegisterChallenge.objects.create(
+            challenge=CHALLENGE_TOKEN,
+            email=EMAIL,
+            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+        ).id
+        response = self.client.post(
+            reverse('auth-register'),
+            {
+                'username': USERNAME,
+                'email': 'anotheremail@test.fr',
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['detail'].code, 'challenge_for_another_email')
         self.assertEqual(len(mail.outbox), 0)
 
     def test_same_email(self):
@@ -121,36 +141,77 @@ class RegisterTestCase(APITestCase):
         self.assertEqual(len(mail.outbox), 1)
 
     def test_missing_username(self):
+        challenge_id = RegisterChallenge.objects.create(
+            challenge=CHALLENGE_TOKEN,
+            email=EMAIL,
+            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+        ).id
         response = self.client.post(
             reverse('auth-register'),
-            { 'email': EMAIL, 'password': PASSWORD },
+            {
+                'email': EMAIL,
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['username'][0].code, 'required')
         self.assertEqual(len(mail.outbox), 0)
 
     def test_missing_email(self):
+        challenge_id = RegisterChallenge.objects.create(
+            challenge=CHALLENGE_TOKEN,
+            email=EMAIL,
+            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+        ).id
         response = self.client.post(
             reverse('auth-register'),
-            { 'username': USERNAME, 'password': PASSWORD },
+            {
+                'username': USERNAME,
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['email'][0].code, 'required')
         self.assertEqual(len(mail.outbox), 0)
 
     def test_missing_password(self):
+        challenge_id = RegisterChallenge.objects.create(
+            challenge=CHALLENGE_TOKEN,
+            email=EMAIL,
+            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+        ).id
         response = self.client.post(
             reverse('auth-register'),
-            { 'username': USERNAME, 'email': EMAIL },
+            {
+                'username': USERNAME,
+                'email': EMAIL,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['password'][0].code, 'required')
         self.assertEqual(len(mail.outbox), 0)
 
     def test_password_too_short(self):
+        challenge_id = RegisterChallenge.objects.create(
+            challenge=CHALLENGE_TOKEN,
+            email=EMAIL,
+            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+        ).id
         response = self.client.post(
             reverse('auth-register'),
-            { 'username': USERNAME, 'email': EMAIL, 'password': '1aC' },
+            {
+                'username': USERNAME,
+                'email': EMAIL,
+                'password': '1aC',
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['password'][0].code, 'password_too_short')
