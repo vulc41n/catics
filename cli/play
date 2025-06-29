@@ -1,0 +1,186 @@
+#!/usr/bin/env python3
+
+from time import sleep
+import re
+import sys
+import json
+from argparse import ArgumentParser
+import requests
+from config import Config
+
+def is_your_turn(config, game):
+    return game['player1_user' if game['is_p1_turn'] else 'player2_user'] == config['username']
+
+def is_player1(config, game):
+    return game['player1_user'] == config['username']
+
+def print_game(config, game):
+    board = game['board']
+    LINE_SEPARATION = '+-----+-----+-----+-----+-----+-----+\n'
+    print(LINE_SEPARATION, end='')
+    for y in range(6):
+        for x in range(6):
+            x, y = str(x), str(y)
+            print('| ', end='')
+            if x not in board or y not in board[x]:
+                print('    ', end='')
+                continue
+            print('p1' if board[x][y][0] else 'p2', end='')
+            print('k' if board[x][y][1] else 'k', end='')
+            print(' ', end='')
+        print('|')
+        print(LINE_SEPARATION, end='')
+
+    (kittens_you, cats_you, kittens_opp, cats_opp) = \
+        ('n_kittens_p1', 'n_cats_p1', 'n_kittens_p2', 'n_cats_p2') \
+        if is_player1(config, game) else \
+        ('n_kittens_p2', 'n_cats_p2', 'n_kittens_p1', 'n_cats_p1')
+    print('\n           YOU          YOUR OPPONENT')
+    print('kittens     ', end='')
+    print(game[kittens_you], end='')
+    print(' '*17, end='')
+    print(game[kittens_opp])
+    print('cats        ', end='')
+    print(game[cats_you], end='')
+    print(' '*17, end='')
+    print(game[cats_opp])
+
+def get_position():
+    while True:
+        position = input('position (nothing for help) : ')
+        if re.fullmatch(r'\d{2}[kc]', position):
+            break
+        else:
+            print(
+                'To place a piece, type [xyp]:',
+                '  • x = column number (starting at 0)',
+                '  • y = row number (starting at 0)',
+                '  • p = piece type: use c for a cat, k for a kitten.',
+                'Example',
+                '  • 32c places a cat at column 3, row 2.',
+                '  • 10k places a kitten at column 1, row 0.',
+                sep='\n'
+             )
+    return (int(position[0]), int(position[1]), position[2] == 'c')
+
+def create_new_game(username=None, agent=None):
+    if username is not None:
+        response = requests.get(
+            config['instance'] + '/auth/user/',
+            { 'username': username },
+            headers={ 'Authorization': 'Token ' + config['token'] }
+        )
+        if response.status_code != 200:
+            print(response.text, file=sys.stderr)
+            exit(1)
+        key = 'player2_user'
+        id = response.json()['id']
+    else:
+        key = 'player2_agent'
+        print('TODO: agents', file=sys.stderr)
+        exit(1)
+
+    response = requests.put(
+        config['instance'] + '/game/',
+        { key: id },
+        headers={ 'Authorization': 'Token ' + config['token'] },
+    )
+    if response.status_code != 200:
+        print(response.text, file=sys.stderr)
+        exit(1)
+
+    return response.json()['id']
+
+def choose_promotion(game):
+    line = ''
+    for (i, p) in enumerate(game['promotions']):
+        choice = '[' + str(i) + ']: ' + ','.join(str(unit[0]) + str(unit[1]) for unit in p)
+        if len(line) + len(choice) > 37:
+            print(line)
+            line = ''
+        line += choice + '   '
+    if line != '':
+        print(line)
+    while True:
+        choice = input('which units will be promoted ? ')
+        if choice.isdigit():
+            choice = int(choice)
+            if choice >= 0 and choice < len(game['promotions']):
+                break
+    response = requests.post(
+        config['instance'] + '/promote/',
+        json.dumps({ 'game': game_id, 'units': game['promotions'][choice] }),
+        headers={
+            'Authorization': 'Token ' + config['token'],
+            'Content-type': 'application/json',
+        },
+    )
+    if response.status_code != 200:
+        print(response.text, file=sys.stderr)
+        exit(1)
+
+parser = ArgumentParser()
+subparsers = parser.add_subparsers(dest='command')
+cmd_new = subparsers.add_parser('new')
+cmd_new.add_argument('-u', '--username')
+cmd_new.add_argument('-a', '--agent')
+cmd_resume = subparsers.add_parser('resume')
+cmd_resume.add_argument('game_id')
+args = parser.parse_args()
+
+config = Config()
+
+if args.command == 'new':
+    if args.username is None and args.agent is None:
+        print('You must specify who will be your opponent (-u or -a)', file=sys.stderr)
+        exit(1)
+    game_id = create_new_game(username=args.username, agent=args.agent)
+    print('game id:', game_id)
+elif args.command == 'resume':
+    game_id = args.game_id
+
+is_waiting = False
+while True:
+    response = requests.get(
+        config['instance'] + '/game/',
+        { 'id': game_id },
+        headers={ 'Authorization': 'Token ' + config['token'] },
+    )
+    if response.status_code != 200:
+        print(response.text, file=sys.stderr)
+        exit(1)
+    game = response.json()
+
+    if 'winner' in game:
+        if (is_player1() and game['winner'] == '1') or \
+            (not is_player1() and game['winner'] == '2'):
+            print('YOU WIN')
+        else:
+            print('YOUR OPPONENT WINS')
+        break
+
+    if is_your_turn(config, game):
+        is_waiting = False
+        if 'promotions' in game:
+            print('============= PROMOTION =============')
+            print_game(config, game)
+            choose_promotion(game)
+            continue
+        print('============= YOUR TURN =============')
+        print_game(config, game)
+        while True:
+            (x, y, is_cat) = get_position()
+            response = requests.post(
+                config['instance'] + '/play/',
+                { 'game': game_id, 'x': x, 'y': y, 'is_cat': is_cat },
+                headers={ 'Authorization': 'Token ' + config['token'] },
+            )
+            if response.status_code == 200:
+                break
+            print(response.text, file=sys.stderr)
+    else:
+        if not is_waiting:
+            print('====== WAITING FOR THE OPPONENT =====')
+            print_game(config, game)
+        is_waiting = True
+        sleep(2)
