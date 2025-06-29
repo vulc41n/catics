@@ -1,10 +1,16 @@
-import os
+import random
+import string
 import hashlib
 from django.core import mail
 from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APITestCase
+from ..models import RegisterChallenge
 from .constants import USERNAME, PASSWORD, EMAIL
+
+CHALLENGE_TOKEN = 'zyxyrszwiz'
+CHALLENGE_ANSWER = 'sbjplv'
 
 class RegisterTestCase(APITestCase):
     def test_basic(self):
@@ -16,7 +22,10 @@ class RegisterTestCase(APITestCase):
         challenge_token = response.data['challenge']
 
         while True:
-            challenge_answer = os.urandom(6).hex()
+            challenge_answer = ''.join(
+                    random.choice(string.ascii_lowercase)
+                    for _ in range(6)
+                )
             digest = hashlib.sha256((challenge_token + challenge_answer).encode()).hexdigest()
             if digest.startswith("000000"):
                 break
@@ -55,26 +64,60 @@ class RegisterTestCase(APITestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     def test_same_email(self):
+        challenge_id = RegisterChallenge.objects.create(
+            challenge=CHALLENGE_TOKEN,
+            email=EMAIL,
+            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+        ).id
         self.client.post(
             reverse('auth-register'),
-            { 'username': USERNAME, 'email': EMAIL, 'password': PASSWORD },
+            {
+                'username': USERNAME,
+                'email': EMAIL,
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
         )
         response = self.client.post(
             reverse('auth-register'),
-            { 'username': USERNAME + '2', 'email': EMAIL, 'password': PASSWORD },
+            {
+                'username': USERNAME + '2',
+                'email': EMAIL,
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['email'][0].code, 'unique')
         self.assertEqual(len(mail.outbox), 1)
 
     def test_same_username(self):
+        challenge_id = RegisterChallenge.objects.create(
+            challenge=CHALLENGE_TOKEN,
+            email=EMAIL,
+            expire_at=timezone.now() + settings.EMAIL_VALIDATION_EXPIRATION,
+        ).id
         self.client.post(
             reverse('auth-register'),
-            { 'username': USERNAME, 'email': EMAIL, 'password': PASSWORD },
+            {
+                'username': USERNAME,
+                'email': EMAIL,
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
         )
         response = self.client.post(
             reverse('auth-register'),
-            { 'username': USERNAME, 'email': 'anotheradress@test.fr', 'password': PASSWORD },
+            {
+                'username': USERNAME,
+                'email': 'anotheradress@test.fr',
+                'password': PASSWORD,
+                'challenge_id': challenge_id,
+                'challenge_answer': CHALLENGE_ANSWER,
+            },
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['username'][0].code, 'unique')
