@@ -240,3 +240,17 @@ class RegisterTestCase(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['detail'].code, 'challenge_fail')
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_ask_challenge_twice(self):
+        response = self.client.get(reverse('auth-register-challenge'), { 'email': EMAIL })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('id', response.data)
+        self.assertIn('challenge', response.data)
+        challenge_id = response.data['id']
+        challenge_token = response.data['challenge']
+        response = self.client.get(reverse('auth-register-challenge'), { 'email': EMAIL })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('id', response.data)
+        self.assertIn('challenge', response.data)
+        self.assertEqual(challenge_id, response.data['id'])
+        self.assertEqual(challenge_token, response.data['challenge'])

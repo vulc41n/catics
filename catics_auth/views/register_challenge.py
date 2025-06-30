@@ -7,10 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from ..models import RegisterChallenge
 
-class RegisterChallengeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RegisterChallenge
-        fields = ('email',)
+class RegisterChallengeSerializer(serializers.Serializer):
+    email = serializers.EmailField()
 
 class RegisterChallengeView(APIView):
     def get(self, request, format=None):
@@ -19,6 +17,14 @@ class RegisterChallengeView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
         data = serializer.validated_data
+
+        challenge_existing = RegisterChallenge.objects.filter(email=data['email'])
+        if challenge_existing.exists():
+            challenge = challenge_existing.first()
+            return Response({
+                'id': challenge.id,
+                'challenge': challenge.challenge,
+            })
 
         challenge = ''.join(
                 random.choice(string.ascii_lowercase)
