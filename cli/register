@@ -26,6 +26,8 @@ if response.status_code != 200:
     print(response.text, file=sys.stderr)
     exit(1)
 
+print('Solving the challenge (this may take a minute)...')
+
 data = response.json()
 challenge_id = data['id']
 challenge_token = data['challenge']
